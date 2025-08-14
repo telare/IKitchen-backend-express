@@ -1,49 +1,87 @@
 import express from "express";
-import bodyParser from "body-parser";
-import { body, validationResult } from "express-validator";
-import { getAllUsers, setUser } from "./drizzle/src/utils/user.js";
+import { getUser, setUser } from "./drizzle/src/utils/user.js";
+import bcrypt from "bcryptjs";
+import { errorHandler, validateRequest } from "./utils/general.js";
+import { generateJWTtokens, logInValidationRules, setAuthCookies, signUpValidationRules } from "./utils/auth.js";
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT;
 if (!PORT) {
   throw new Error("PORT is undefined");
 }
-app.use(bodyParser.json());
-
-function signUpValidationRules() {
-  return [
-    body("name").trim().notEmpty(),
-    body("email").isEmail(),
-    body("password").trim().isLength({ min: 8 }),
-  ];
-}
-function logInValidationRules() {
-  return [
-    body("email").isEmail(),
-    body("password").trim().isLength({ min: 8 }),
-  ];
+export const secretKey = process.env.JWT_SECRET;
+if (!secretKey) {
+  throw new Error("JWT_SECRET is undefined");
 }
 
-app.post("/api/v1/sign-up", signUpValidationRules(), async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  const { name, email, password } = req.body;
-  console.log("Received user data:", name, email, password);
-  try {
-    await setUser({ name, email, password });
-    res.status(201).json({
-      message: `User has been created successfully with next data: ${name}, ${email}, ${password}`,
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({
-        message: `An unexpected error happened, try again later. Error: ${error.messsage}`,
+app.use(express.json());
+
+app.post(
+  "/api/v1/sign-up",
+  signUpValidationRules(),
+  validateRequest,
+  async (req, res) => {
+    const inputUser = req.body;
+    // console.log("Received user data:", name, email, password);
+
+    try {
+      const userDBdata = await getUser(inputUser.email);
+      // console.log(userDBdata);
+      if (userDBdata) {
+        return res.status(409).json({ message: "User already exists" });
+      }
+      const hashedPassword = await bcrypt.hash(inputUser.password, 10);
+
+      const settedUser = await setUser({
+        name: inputUser.name,
+        email: inputUser.email,
+        password: hashedPassword,
       });
+      const userPayload = { id: settedUser.id };
+      const JWTtokens = generateJWTtokens(userPayload, secretKey);
+      setAuthCookies(res, JWTtokens);
+      res.status(201).json({
+        message: `User has been created successfully.`,
+      });
+    } catch (error) {
+      errorHandler(error, res);
     }
   }
-});
+);
+
+app.post(
+  "/api/v1/log-in",
+  logInValidationRules(),
+  validateRequest,
+  async (req, res) => {
+    const inputUser = req.body;
+    try {
+      const userDBdata = await getUser(inputUser.email);
+      if (!userDBdata) {
+        return res.status(401).json({ message: "Invalid email or password." });
+      }
+
+      const hashedPassword = userDBdata.password;
+      const isPasswordEqual = await bcrypt.compare(
+        inputUser.password,
+        hashedPassword
+      );
+      if (!isPasswordEqual) {
+        return res.status(401).json({ message: "Invalid email or password." });
+      }
+
+      const userPayload = { id: userDBdata.id };
+      const JWTtokens = generateJWTtokens(userPayload, secretKey);
+      setAuthCookies(res, JWTtokens);
+
+      res.status(200).json({
+        message: "Successfully authorized.",
+      });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  }
+);
 
 app.listen(3000, () => {
   console.log(`Your server is listening on: http://localhost:${PORT}`);

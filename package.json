@@ -11,14 +11,16 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",
+    "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.1",
     "drizzle-orm": "^0.44.4",
     "express": "^5.1.0"
   },
   "devDependencies": {
-    "body-parser": "^2.2.0",
     "drizzle-kit": "^0.31.4",
     "express-validator": "^7.2.1",
+    "jose": "^6.0.12",
+    "jsonwebtoken": "^9.0.2",
     "tsx": "^4.20.4"
   }
 }
