@@ -7,7 +7,9 @@
   "type": "module",
   "main": "app.js",
   "scripts": {
-    "dev": "node --watch --env-file=.env app.js "
+    "build": "tsc --build",
+    "start": "node ./dist/index.js",
+    "dev": "nodemon --exec tsx --env-file=.env ./src/app.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",
@@ -17,10 +19,15 @@
     "express": "^5.1.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.3.0",
     "drizzle-kit": "^0.31.4",
     "express-validator": "^7.2.1",
     "jose": "^6.0.12",
     "jsonwebtoken": "^9.0.2",
-    "tsx": "^4.20.4"
+    "nodemon": "^3.1.10",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
   }
 }

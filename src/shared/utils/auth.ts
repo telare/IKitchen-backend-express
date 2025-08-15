@@ -1,5 +1,6 @@
-import { body } from "express-validator";
+import { body, ValidationChain } from "express-validator";
 import jwt from "jsonwebtoken";
+import { Response } from "express";
 
 export const authReqBodyRules = {
   name: body("name")
@@ -23,7 +24,7 @@ export const authReqBodyRules = {
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters long"),
 };
-export function signUpValidationRules() {
+export function signUpValidationRules(): ValidationChain[] {
   return [
     // check("body").custom(),
     authReqBodyRules.name,
@@ -31,11 +32,17 @@ export function signUpValidationRules() {
     authReqBodyRules.password,
   ];
 }
-export function logInValidationRules() {
+export function logInValidationRules(): ValidationChain[] {
   return [authReqBodyRules.email, authReqBodyRules.password];
 }
 
-export function generateJWTtokens(payload, secretKey) {
+export function generateJWTtokens(
+  payload: string | object,
+  secretKey: jwt.Secret
+): {
+  accessToken: string;
+  refreshToken: string;
+} {
   const accessToken = jwt.sign(payload, secretKey, {
     expiresIn: "1h",
   });
@@ -44,7 +51,13 @@ export function generateJWTtokens(payload, secretKey) {
   });
   return { accessToken, refreshToken };
 }
-export function setAuthCookies(res, tokens) {
+export function setAuthCookies(
+  res: Response,
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  }
+): void {
   const { accessToken, refreshToken } = tokens;
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
