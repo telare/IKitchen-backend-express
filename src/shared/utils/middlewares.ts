@@ -20,8 +20,8 @@ export function errorMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  console.log(err);
   if (err instanceof Error) {
+    console.log(err.message);
     res.status(500).json({
       message: `An unexpected error happened: ${err.message}`,
     });

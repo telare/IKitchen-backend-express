@@ -17,12 +17,12 @@ if (!secretKey) {
 }
 
 const router = Router();
-router.use(validationMiddleware);
 
 router.post(
   "/sign-up",
   signUpValidationRules(),
-  async (req: Request, res: Response, next:NextFunction) => {
+  validationMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
     const inputUser: User = req.body;
     // console.log("Received user data:", name, email, password);
 
@@ -58,7 +58,8 @@ router.post(
 router.post(
   "/log-in",
   logInValidationRules(),
-  async (req: Request, res: Response,next:NextFunction) => {
+  validationMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
     const inputUser: User = req.body;
     try {
       const userDBdata: UserDB | undefined = await getUser(inputUser.email);
