@@ -66,3 +66,12 @@ export function setAuthCookies(
     httpOnly: true,
   });
 }
+
+export function tokenVerify(token: string, secret: string) {
+  try {
+    const payload = jwt.verify(token, secret);
+    return payload;
+  } catch (err: unknown) {
+    throw new Error("Unauthorized: token expired");
+  }
+}
