@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
-import { usersTable } from "@drizzle/db/schema";
+import { favoriteRecipesTable, usersTable } from "@drizzle/db/schema";
 import { db } from "@drizzle/index";
 import { User, UserDB } from "@shared/types/user";
+import { Recipe } from "@shared/types/recipe";
 
 export async function getAllUsers(): Promise<UserDB[] | undefined> {
   try {
@@ -18,29 +19,45 @@ export async function getAllUsers(): Promise<UserDB[] | undefined> {
     }
   }
 }
-export async function getUser(email: string): Promise<UserDB | undefined> {
-  if (!email) {
-    throw new Error("Email argument was not provided");
-  }
+export async function getUser({
+  property,
+  value,
+}: {
+  property: "id" | "email";
+  value: string;
+}): Promise<UserDB | undefined> {
   try {
+    const whereEQ = eq(usersTable[property], value);
+    console.log(property, value);
     const user: UserDB[] | undefined = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.email, email));
+      .where(whereEQ);
 
     return user[0];
   } catch (error: unknown) {
     if (error instanceof Error) {
       throw new Error(
-        "An unexpected error in setUser function:{error.message}"
+        `An unexpected error in setUser function:${error.message}`
       );
     }
   }
 }
-export async function setUser(userData: User): Promise<UserDB | undefined> {
-  if (!userData) {
-    throw new Error("Invalid user data");
+export async function getUserFavoriteRecipes(userID: string) {
+  try {
+    const favoriteRecipes = await db
+      .select({
+        recipeID: favoriteRecipesTable.recipe_id,
+      })
+      .from(favoriteRecipesTable)
+      .leftJoin(usersTable, eq(usersTable.id, favoriteRecipesTable.user_id))
+      .where(eq(favoriteRecipesTable.user_id, userID));
+    return favoriteRecipes;
+  } catch (err: unknown) {
+    throw err;
   }
+}
+export async function setUser(userData: User): Promise<UserDB | undefined> {
   try {
     const [settedUser] = await db
       .insert(usersTable)
@@ -53,5 +70,22 @@ export async function setUser(userData: User): Promise<UserDB | undefined> {
         "An unexpected error in setUser function:{error.message}"
       );
     }
+  }
+}
+export async function setUserFavoriteRecipe(
+  recipeID: string,
+  userID: string
+): Promise<Recipe["id"]> {
+  try {
+    const insertedFavoriteRecipe = await db
+      .insert(favoriteRecipesTable)
+      .values({ recipe_id: recipeID, user_id: userID })
+      .returning();
+    if (!insertedFavoriteRecipe[0]) {
+      throw new Error("An unexpected error during inserting favorite recipe");
+    }
+    return insertedFavoriteRecipe[0].id;
+  } catch (err: unknown) {
+    throw err;
   }
 }

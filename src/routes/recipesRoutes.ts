@@ -15,9 +15,9 @@ if (!apiKey) throw new Error("apikey is not defined");
 const router = Router();
 router.get(
   "/",
+  authMiddleware,
   getRecipeValidationRules("/"),
   validationMiddleware,
-  authMiddleware,
   async (req: Request, res: Response, next: NextFunction) => {
     const { sort, limit, cuisine, diet, ingredients } = req.query;
     let url: string;

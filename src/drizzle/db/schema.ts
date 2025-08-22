@@ -113,7 +113,7 @@ export const favoriteRecipesTable = pgTable("favoriteRecipes", {
     .notNull()
     .references(() => recipesTable.id, {
       onDelete: "cascade",
-    }),
+    }).unique(),
 });
 
 export const userRelations = relations(usersTable, ({ many }) => ({

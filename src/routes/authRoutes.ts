@@ -27,10 +27,13 @@ router.post(
     // console.log("Received user data:", name, email, password);
 
     try {
-      const userDBdata: UserDB | undefined = await getUser(inputUser.email);
+      const userDBdata: UserDB | undefined = await getUser({
+        property: "email",
+        value: inputUser.email,
+      });
       // console.log(userDBdata);
       if (userDBdata) {
-        return res.status(409).json({ message: "User already exists" });
+        return res.status(409).json({ message: "User has already exists" });
       }
       const hashedPassword = await bcrypt.hash(inputUser.password, 10);
       const securedUser: User = {
@@ -62,7 +65,10 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     const inputUser: User = req.body;
     try {
-      const userDBdata: UserDB | undefined = await getUser(inputUser.email);
+      const userDBdata: UserDB | undefined = await getUser({
+        property: "email",
+        value: inputUser.email,
+      });
       if (!userDBdata) {
         return res.status(401).json({ message: "Invalid email or password." });
       }
