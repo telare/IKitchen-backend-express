@@ -1,4 +1,5 @@
 import { relations, sql } from "drizzle-orm";
+import { serial } from "drizzle-orm/pg-core";
 import {
   integer,
   numeric,
@@ -65,9 +66,7 @@ export const recipeIngredients = pgTable("recipeIngredients", {
 });
 
 export const recipeTags = pgTable("recipeTags", {
-  id: uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: serial().primaryKey(),
   recipe_id: uuid()
     .notNull()
     .references(() => recipesTable.id, {
@@ -89,9 +88,7 @@ export const recipeImagesTable = pgTable("recipeImages", {
 });
 
 export const recipeCookTipsTable = pgTable("recipeCookTips", {
-  id: uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: serial().primaryKey(),
   recipe_id: uuid()
     .notNull()
     .references(() => recipesTable.id, {
@@ -101,9 +98,7 @@ export const recipeCookTipsTable = pgTable("recipeCookTips", {
 });
 
 export const favoriteRecipesTable = pgTable("favoriteRecipes", {
-  id: uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: serial().primaryKey(),
   user_id: uuid()
     .notNull()
     .references(() => usersTable.id, {
@@ -113,7 +108,8 @@ export const favoriteRecipesTable = pgTable("favoriteRecipes", {
     .notNull()
     .references(() => recipesTable.id, {
       onDelete: "cascade",
-    }).unique(),
+    })
+    .unique(),
 });
 
 export const userRelations = relations(usersTable, ({ many }) => ({

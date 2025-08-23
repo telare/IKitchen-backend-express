@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { favoriteRecipesTable, usersTable } from "@drizzle/db/schema";
+import { favoriteRecipesTable, recipesTable, usersTable } from "@drizzle/db/schema";
 import { db } from "@drizzle/index";
 import { User, UserDB } from "@shared/types/user";
 import { Recipe } from "@shared/types/recipe";
@@ -57,6 +57,21 @@ export async function getUserFavoriteRecipes(userID: string) {
     throw err;
   }
 }
+export async function getUserRecipes(userID: string) {
+  try {
+    const recipes = await db
+      .select({
+        recipeID: recipesTable.id,
+      })
+      .from(recipesTable)
+      .leftJoin(usersTable, eq(usersTable.id, recipesTable.id))
+      .where(eq(recipesTable.author_id, userID));
+    console.log(recipes)
+    return recipes;
+  } catch (err: unknown) {
+    throw err;
+  }
+}
 export async function setUser(userData: User): Promise<UserDB | undefined> {
   try {
     const [settedUser] = await db
@@ -84,7 +99,7 @@ export async function setUserFavoriteRecipe(
     if (!insertedFavoriteRecipe[0]) {
       throw new Error("An unexpected error during inserting favorite recipe");
     }
-    return insertedFavoriteRecipe[0].id;
+    return insertedFavoriteRecipe[0].recipe_id;
   } catch (err: unknown) {
     throw err;
   }

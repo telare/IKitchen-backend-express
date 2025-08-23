@@ -13,7 +13,7 @@ if (!PORT) {
 
 app.use(express.json());
 app.use(cookieParser());
-app.use("/api/v1", authRoutes);
+app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/recipes", recipesRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use(errorMiddleware);

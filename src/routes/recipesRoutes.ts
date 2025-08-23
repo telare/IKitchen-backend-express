@@ -55,10 +55,7 @@ router.get(
   getRecipeValidationRules("/:recipeId"),
   validationMiddleware,
   async (req: Request, res: Response, next: NextFunction) => {
-    const recipeId: string | undefined = req.params["recipeId"];
-    if (!recipeId) {
-      return res.status(400).json({ message: "Bad request, invalid recipeId" });
-    }
+    const recipeId: string | undefined = req.params["recipeId"]!;
     try {
       const recipe = await axios.get(
         `https://api.spoonacular.com/recipes/${recipeId}/information?&apiKey=${apiKey}`
