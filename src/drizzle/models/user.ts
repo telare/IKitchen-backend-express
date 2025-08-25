@@ -1,10 +1,11 @@
 import { eq } from "drizzle-orm";
-import { favoriteRecipesTable, recipesTable, usersTable } from "@drizzle/db/schema";
+import { usersTable } from "@drizzle/schemas/users";
 import { db } from "@drizzle/index";
 import { User, UserDB } from "@shared/types/user";
 import { Recipe } from "@shared/types/recipe";
+import { favoriteRecipesTable, recipesTable } from "@drizzle/schemas/recipes";
 
-export async function getAllUsers(): Promise<UserDB[] | undefined> {
+export async function findUsers(): Promise<UserDB[] | undefined> {
   try {
     const users = await db.select().from(usersTable);
     if (!users[0]) {
@@ -19,7 +20,8 @@ export async function getAllUsers(): Promise<UserDB[] | undefined> {
     }
   }
 }
-export async function getUser({
+// make separate func findUserID etc
+export async function findUser({
   property,
   value,
 }: {
@@ -43,7 +45,7 @@ export async function getUser({
     }
   }
 }
-export async function getUserFavoriteRecipes(userID: string) {
+export async function findUserFavoriteRecipes(userID: string) {
   try {
     const favoriteRecipes = await db
       .select({
@@ -57,7 +59,7 @@ export async function getUserFavoriteRecipes(userID: string) {
     throw err;
   }
 }
-export async function getUserRecipes(userID: string) {
+export async function findUserRecipes(userID: string) {
   try {
     const recipes = await db
       .select({
@@ -66,13 +68,13 @@ export async function getUserRecipes(userID: string) {
       .from(recipesTable)
       .leftJoin(usersTable, eq(usersTable.id, recipesTable.id))
       .where(eq(recipesTable.author_id, userID));
-    console.log(recipes)
+    console.log(recipes);
     return recipes;
   } catch (err: unknown) {
     throw err;
   }
 }
-export async function setUser(userData: User): Promise<UserDB | undefined> {
+export async function insertUser(userData: User): Promise<UserDB | undefined> {
   try {
     const [settedUser] = await db
       .insert(usersTable)
@@ -87,7 +89,7 @@ export async function setUser(userData: User): Promise<UserDB | undefined> {
     }
   }
 }
-export async function setUserFavoriteRecipe(
+export async function insertUserFavoriteRecipe(
   recipeID: string,
   userID: string
 ): Promise<Recipe["id"]> {

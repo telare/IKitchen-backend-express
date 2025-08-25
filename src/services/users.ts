@@ -13,7 +13,7 @@ const usersValidationRules = {
     ],
     POST: [
       param("userID").isUUID().withMessage("Parametr userID must be a UUID"),
-      body("recipeID").isUUID().withMessage("property userID must be a UUID")
+      body("recipeID").isUUID().withMessage("property userID must be a UUID"),
     ],
   },
 };

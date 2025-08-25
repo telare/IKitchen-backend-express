@@ -7,9 +7,9 @@ import {
   recipeInstructions,
   recipesTable,
   recipeTags,
-} from "@drizzle/db/schema";
+} from "@drizzle/schemas/recipes";
 //If imageURL has a constraint like CHECK (imageURL ~ '^https?://')
-export async function addRecipe(
+export async function insertRecipe(
   recipe: Recipe,
   userID: string
 ): Promise<string | undefined> {

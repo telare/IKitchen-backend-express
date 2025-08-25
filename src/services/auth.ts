@@ -1,6 +1,6 @@
-import { body, ValidationChain } from "express-validator";
 import jwt from "jsonwebtoken";
 import { Response } from "express";
+import { body, ValidationChain } from "express-validator";
 
 export const authReqBodyRules = {
   name: body("name")
@@ -51,6 +51,7 @@ export function generateJWTtokens(
   });
   return { accessToken, refreshToken };
 }
+
 export function setAuthCookies(
   res: Response,
   tokens: {

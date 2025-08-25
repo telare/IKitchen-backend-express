@@ -1,1 +1,0 @@
-{"version":3,"file":"index.js","sourceRoot":"","sources":["../../src/drizzle/index.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,MAAM,uBAAuB,CAAC;AAEhD,MAAM,YAAY,GAAG,OAAO,CAAC,GAAG,CAAC,cAAc,CAAC,CAAC;AACjD,IAAI,CAAC,YAAY;IAAE,MAAM,IAAI,KAAK,CAAC,mCAAmC,CAAC,CAAC;AAExE,MAAM,CAAC,MAAM,EAAE,GAAG,OAAO,CAAC,YAAY,CAAC,CAAC"}

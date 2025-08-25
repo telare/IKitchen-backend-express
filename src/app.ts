@@ -1,9 +1,10 @@
 import express from "express";
 import authRoutes from "./routes/authRoutes";
 import recipesRoutes from "./routes/recipesRoutes";
-import userRoutes from "./routes/userRoutes";
+import userRoutes from "./routes/usersRoutes";
 import cookieParser from "cookie-parser";
-import { errorMiddleware } from "@shared/utils/middlewares";
+import { errorMiddleware } from "middlewares/general";
+
 
 export const app = express();
 const PORT = process.env["PORT"];

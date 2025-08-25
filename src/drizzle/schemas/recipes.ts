@@ -1,24 +1,6 @@
+import { integer, numeric, pgTable, serial, text, uuid, varchar } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
-import { serial } from "drizzle-orm/pg-core";
-import {
-  integer,
-  numeric,
-  pgTable,
-  text,
-  uuid,
-  varchar,
-} from "drizzle-orm/pg-core";
-
-// indexes, other relations, Uniqueness Constraints, enums
-
-export const usersTable = pgTable("users", {
-  id: uuid()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  name: varchar({ length: 255 }).notNull().unique(),
-  email: varchar({ length: 255 }).notNull().unique(),
-  password: varchar({ length: 255 }).notNull(),
-});
+import { usersTable } from "./users";
 
 export const recipesTable = pgTable("recipes", {
   id: uuid()
@@ -112,10 +94,6 @@ export const favoriteRecipesTable = pgTable("favoriteRecipes", {
     .unique(),
 });
 
-export const userRelations = relations(usersTable, ({ many }) => ({
-  recipes: many(recipesTable),
-  favoriteRecipes: many(favoriteRecipesTable),
-}));
 
 export const recipeRelations = relations(recipesTable, ({ many }) => ({
   images: many(recipeImagesTable),
