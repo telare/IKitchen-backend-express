@@ -1,16 +1,17 @@
-import { Recipe } from "@shared/types/recipe";
+import { InputRecipe, Recipe } from "@shared/types/recipe";
 import { db } from "../index";
 import {
   recipeCookTipsTable,
   recipeImagesTable,
-  recipeIngredients,
-  recipeInstructions,
+  recipeIngredientsTable,
+  recipeInstructionsTable,
   recipesTable,
-  recipeTags,
+  recipeTagsTable,
 } from "@drizzle/schemas/recipes";
+import { eq } from "drizzle-orm";
 //If imageURL has a constraint like CHECK (imageURL ~ '^https?://')
 export async function insertRecipe(
-  recipe: Recipe,
+  recipe: InputRecipe,
   userID: string
 ): Promise<string | undefined> {
   try {
@@ -69,7 +70,7 @@ export async function insertRecipe(
       instruction: instruction.step,
     }));
     const settedInstructions = await db
-      .insert(recipeInstructions)
+      .insert(recipeInstructionsTable)
       .values(instructions)
       .returning();
     if (settedInstructions.length !== instructions.length) {
@@ -87,7 +88,7 @@ export async function insertRecipe(
     }));
 
     const settedIngredients = await db
-      .insert(recipeIngredients)
+      .insert(recipeIngredientsTable)
       .values(ingredients)
       .returning();
 
@@ -100,7 +101,10 @@ export async function insertRecipe(
       name: tag,
       recipe_id: recipeID,
     }));
-    const settedTags = await db.insert(recipeTags).values(tags).returning();
+    const settedTags = await db
+      .insert(recipeTagsTable)
+      .values(tags)
+      .returning();
     if (settedTags.length !== tags.length) {
       throw new Error(`Recipe's tags insert failed. Recipe id: ${recipeID}`);
     }
@@ -109,4 +113,139 @@ export async function insertRecipe(
   } catch (err: unknown) {
     throw err;
   }
+}
+
+export async function findRecipeByTitle(
+  title: string
+): Promise<Recipe | undefined> {
+  const [recipe] = await db
+    .select()
+    .from(recipesTable)
+    .where(eq(recipesTable.title, title));
+  if (!recipe) return undefined;
+  const id: string = recipe.id;
+  const images = await db
+    .select()
+    .from(recipeImagesTable)
+    .where(eq(recipeImagesTable.recipe_id, id));
+  const instructions = await db
+    .select()
+    .from(recipeInstructionsTable)
+    .where(eq(recipeInstructionsTable.recipe_id, id));
+  const ingredients = await db
+    .select()
+    .from(recipeIngredientsTable)
+    .where(eq(recipeIngredientsTable.recipe_id, id));
+  const tags = await db
+    .select()
+    .from(recipeTagsTable)
+    .where(eq(recipeTagsTable.recipe_id, id));
+  const cookTips = await db
+    .select()
+    .from(recipeCookTipsTable)
+    .where(eq(recipeCookTipsTable.recipe_id, id));
+  if (
+    images.length === 0 ||
+    instructions.length === 0 ||
+    ingredients.length === 0 ||
+    tags.length === 0 ||
+    cookTips.length === 0
+  ) {
+    return undefined;
+  }
+  const result = {
+    id: recipe.id,
+    imageURL: images.map((img) => img.imageURL),
+    title: recipe.title,
+    description: recipe.description,
+    servings: recipe.servings,
+    prep: {
+      hrs: recipe.prep_hrs,
+      mins: recipe.prep_mins,
+    },
+    cook: {
+      hrs: recipe.cook_hrs,
+      mins: recipe.cook_mins,
+    },
+    tags: tags.map((tag) => tag.name),
+    ingredients: ingredients.map((ingr) => ({
+      name: ingr.name,
+      quantity: Number(ingr.quantity),
+      unit: ingr.unit,
+    })),
+    instructions: instructions.map((instr) => ({ step: instr.instruction })),
+    cookTips: cookTips.map((tip) => tip.tip),
+  };
+
+  return result;
+}
+
+export async function findRecipeById(id: string): Promise<Recipe> {
+  const [recipe] = await db
+    .select()
+    .from(recipesTable)
+    .where(eq(recipesTable.id, id));
+  const images = await db
+    .select()
+    .from(recipeImagesTable)
+    .where(eq(recipeImagesTable.recipe_id, id));
+  const instructions = await db
+    .select()
+    .from(recipeInstructionsTable)
+    .where(eq(recipeInstructionsTable.recipe_id, id));
+  const ingredients = await db
+    .select()
+    .from(recipeIngredientsTable)
+    .where(eq(recipeIngredientsTable.recipe_id, id));
+  const tags = await db
+    .select()
+    .from(recipeTagsTable)
+    .where(eq(recipeTagsTable.recipe_id, id));
+  const cookTips = await db
+    .select()
+    .from(recipeCookTipsTable)
+    .where(eq(recipeCookTipsTable.recipe_id, id));
+  if (
+    !recipe ||
+    images.length === 0 ||
+    instructions.length === 0 ||
+    ingredients.length === 0 ||
+    tags.length === 0 ||
+    cookTips.length === 0
+  ) {
+    console.log(
+      recipe,
+      images.length,
+      instructions.length,
+      ingredients.length,
+      tags.length,
+      cookTips.length
+    );
+    throw new Error("Error in findRecipeById function");
+  }
+  const result = {
+    id: recipe.id,
+    imageURL: images.map((img) => img.imageURL),
+    title: recipe.title,
+    description: recipe.description,
+    servings: recipe.servings,
+    prep: {
+      hrs: recipe.prep_hrs,
+      mins: recipe.prep_mins,
+    },
+    cook: {
+      hrs: recipe.cook_hrs,
+      mins: recipe.cook_mins,
+    },
+    tags: tags.map((tag) => tag.name),
+    ingredients: ingredients.map((ingr) => ({
+      name: ingr.name,
+      quantity: Number(ingr.quantity),
+      unit: ingr.unit,
+    })),
+    instructions: instructions.map((instr) => ({ step: instr.instruction })),
+    cookTips: cookTips.map((tip) => tip.tip),
+  };
+
+  return result;
 }

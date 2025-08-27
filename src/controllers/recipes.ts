@@ -1,6 +1,7 @@
-import { insertRecipe } from "@drizzle/models/recipe";
+import * as RecipeModel from "@drizzle/models/recipe";
 import { AuthRequest } from "@shared/types/general";
-import { Recipe } from "@shared/types/recipe";
+import { InputRecipe, Recipe } from "@shared/types/recipe";
+import { AppError } from "@shared/utils/AppError";
 import axios from "axios";
 import { NextFunction, Request, Response } from "express";
 
@@ -53,6 +54,7 @@ export async function getRecipe(
     const recipe = await axios.get(
       `https://api.spoonacular.com/recipes/${recipeId}/information?&apiKey=${apiKey}`
     );
+    // refactor
     if (recipe.data) {
       return res.status(200).json(recipe.data);
     } else {
@@ -63,19 +65,52 @@ export async function getRecipe(
   }
 }
 
+// export async function getRecipeById(req: Request, res: Response, next: NextFunction) {
+//   try {
+//     const apiKey = process.env["FOOD_API_KEY"];
+//     if (!apiKey) throw new Error("apikey is not defined");
+//     const recipeId: string | undefined = req.params["recipeId"]!;
+//     const recipe = await findRecipeById(recipeId);
+//     if (recipe) {
+//       return res.status(200).json(recipe);
+//     } else {
+//       throw new Error("An unexpected error during a GET random recipes");
+//     }
+//   } catch (error: unknown) {
+//     next(error);
+//   }
+// }
+
 export async function postRecipe(
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ) {
   try {
-    const recipe: Recipe = req.body;
+    const recipe: InputRecipe = req.body;
     const userID: string | undefined = req.user?.id;
-    if (!userID) throw new Error("userId was not provided");
-    const recipeID: string | undefined = await insertRecipe(recipe, userID);
-    if (!recipeID) {
-      throw new Error("An unexpeceted error during the process");
+    if (!userID) {
+      const err: AppError = new AppError(400, "userId was not provided");
+      return res.status(err.statusCode).json(err.getError());
     }
+
+    const recipeDb: Recipe | undefined = await RecipeModel.findRecipeByTitle(
+      recipe.title
+    );
+    if (recipeDb) {
+      const err: AppError = new AppError(409, "Recipe already exists!");
+      return res.status(err.statusCode).json(err.getError());
+    }
+
+    const recipeID: string | undefined = await RecipeModel.insertRecipe(
+      recipe,
+      userID
+    );
+    if (!recipeID) {
+      const err: AppError = new AppError(500, "Error during insert recipe to a DB");
+      return res.status(err.statusCode).json(err.getError());
+    }
+
     return res.status(201).json({
       message: `Recipe added successfully! Recipe id: ${recipeID}.`,
     });

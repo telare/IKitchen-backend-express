@@ -1,9 +1,9 @@
 import * as AuthService from "services/auth";
 import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
-import { findUser, insertUser } from "@drizzle/models/user";
+import * as UserModel from "@drizzle/models/user";
 import { User, UserDB } from "@shared/types/user";
-
+import { AppError } from "@shared/utils/AppError";
 
 export async function signUp(req: Request, res: Response, next: NextFunction) {
   try {
@@ -12,13 +12,13 @@ export async function signUp(req: Request, res: Response, next: NextFunction) {
     if (!secretKey) {
       throw new Error("JWT_SECRET is undefined");
     }
-    const userDBdata: UserDB | undefined = await findUser({
+    const userDBdata: UserDB | undefined = await UserModel.findUser({
       property: "email",
       value: inputUser.email,
     });
-    // console.log(userDBdatsa);
     if (userDBdata) {
-      return res.status(409).json({ message: "User has already exists" });
+      const error = new AppError(409);
+      return res.status(error.statusCode).json(error.getError());
     }
     const hashedPassword = await bcrypt.hash(inputUser.password, 10);
     const securedUser: User = {
@@ -26,9 +26,12 @@ export async function signUp(req: Request, res: Response, next: NextFunction) {
       email: inputUser.email,
       password: hashedPassword,
     };
-    const settedUser: UserDB | undefined = await insertUser(securedUser);
+    const settedUser: UserDB | undefined = await UserModel.insertUser(
+      securedUser
+    );
     if (!settedUser) {
-      throw new Error("Error during setting user in db");
+      const error = new AppError(500,"Error during setting user in db");
+      throw error.getError();
     }
     const userPayload = { id: settedUser.id };
     const JWTtokens: { accessToken: string; refreshToken: string } =
@@ -49,12 +52,13 @@ export async function logIn(req: Request, res: Response, next: NextFunction) {
     if (!secretKey) {
       throw new Error("JWT_SECRET is undefined");
     }
-    const userDBdata: UserDB | undefined = await findUser({
+    const userDBdata: UserDB | undefined = await UserModel.findUser({
       property: "email",
       value: inputUser.email,
     });
     if (!userDBdata) {
-      return res.status(401).json({ message: "Invalid email or password." });
+      const error = new AppError(401);
+      return res.status(error.statusCode).json(error.getError());
     }
 
     const hashedPassword: string = userDBdata.password;
@@ -63,7 +67,8 @@ export async function logIn(req: Request, res: Response, next: NextFunction) {
       hashedPassword
     );
     if (!isPasswordEqual) {
-      return res.status(401).json({ message: "Invalid email or password." });
+      const error = new AppError(401);
+      return res.status(error.statusCode).json(error.getError());
     }
 
     const userPayload = { id: userDBdata.id };

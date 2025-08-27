@@ -1,6 +1,6 @@
 export type Recipe = {
   id: string;
-  imageURL:string[];
+  imageURL: string[];
   title: string;
   description: string;
   servings: number;
@@ -23,3 +23,4 @@ export type Recipe = {
   }[];
   cookTips: string[];
 };
+export type InputRecipe = Omit<Recipe, "id">;

@@ -22,6 +22,9 @@ const recipeValidationRules = {
   "/:recipeId": [
     param("recipeId").isInt().withMessage("recipeId must be an integer"),
   ],
+  // "/:recipeId/db": [
+  //   param("recipeId").isUUID().withMessage("recipeId must be a UUID"),
+  // ],
   "/add": [
     body("title").isString().withMessage("title must be a string"),
     body("description").isString().withMessage("description must be a string"),
@@ -79,6 +82,8 @@ export function getRecipeValidationRules(path: string): ValidationChain[] {
       return recipeValidationRules["/"];
     case "/:recipeId":
       return recipeValidationRules["/:recipeId"];
+    // case "/:recipeId/db":
+    //   return recipeValidationRules["/:recipeId/db"];
     case "/add":
       return recipeValidationRules["/add"];
     default:

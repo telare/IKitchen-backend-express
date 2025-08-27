@@ -20,7 +20,7 @@ export const recipesTable = pgTable("recipes", {
   cook_mins: integer().notNull(),
 });
 
-export const recipeInstructions = pgTable("recipeInstructions", {
+export const recipeInstructionsTable = pgTable("recipeInstructions", {
   id: uuid()
     .primaryKey()
     .default(sql`gen_random_uuid()`),
@@ -33,7 +33,7 @@ export const recipeInstructions = pgTable("recipeInstructions", {
   instruction: text().notNull(),
 });
 
-export const recipeIngredients = pgTable("recipeIngredients", {
+export const recipeIngredientsTable = pgTable("recipeIngredients", {
   id: uuid()
     .primaryKey()
     .default(sql`gen_random_uuid()`),
@@ -47,7 +47,7 @@ export const recipeIngredients = pgTable("recipeIngredients", {
   unit: varchar({ length: 255 }).notNull(),
 });
 
-export const recipeTags = pgTable("recipeTags", {
+export const recipeTagsTable = pgTable("recipeTags", {
   id: serial().primaryKey(),
   recipe_id: uuid()
     .notNull()
@@ -97,8 +97,8 @@ export const favoriteRecipesTable = pgTable("favoriteRecipes", {
 
 export const recipeRelations = relations(recipesTable, ({ many }) => ({
   images: many(recipeImagesTable),
-  instructions: many(recipeInstructions),
-  ingredients: many(recipeIngredients),
-  tags: many(recipeTags),
+  instructions: many(recipeInstructionsTable),
+  ingredients: many(recipeIngredientsTable),
+  tags: many(recipeTagsTable),
   cookTips: many(recipeCookTipsTable),
 }));

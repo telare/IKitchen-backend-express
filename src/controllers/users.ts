@@ -1,11 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { UserRequest } from "@shared/types/general";
-import {
-  findUser,
-  findUserFavoriteRecipes,
-  findUserRecipes,
-  insertUserFavoriteRecipe,
-} from "@drizzle/models/user";
+import * as UserModel from "@drizzle/models/user";
+import { AppError } from "@shared/utils/AppError";
 
 export async function getUser(
   req: Request<UserRequest>,
@@ -15,12 +11,16 @@ export async function getUser(
   try {
     const userID: string | undefined = req.params.userID;
 
-    const user = await findUser({
+    const user = await UserModel.findUser({
       property: "id",
       value: userID,
     });
     if (!user) {
-      throw new Error("An unexpected error during getUser function execution");
+      const err: AppError = new AppError(
+        500,
+        "Error during getting user from a DB."
+      );
+      return res.status(err.statusCode).json(err.getError());
     }
     return res.status(200).json({
       user,
@@ -37,7 +37,7 @@ export async function getUserRecipes(
 ) {
   try {
     const userID = req.params.userID;
-    const recipes = await findUserRecipes(userID);
+    const recipes = await UserModel.findUserRecipes(userID);
     const recipeIDs: string[] = recipes.map((recipe) => {
       return recipe.recipeID;
     });
@@ -56,7 +56,7 @@ export async function getUserFavorites(
 ) {
   try {
     const userID: string | undefined = req.params.userID;
-    const favoriteRecipes = await findUserFavoriteRecipes(userID);
+    const favoriteRecipes = await UserModel.findUserFavoriteRecipes(userID);
     const recipeIDs: string[] = favoriteRecipes.map((recipe) => {
       return recipe.recipeID;
     });
@@ -78,11 +78,21 @@ export async function postUserFavorite(
 
     const { recipeID }: { recipeID: string | undefined } = req.body;
     if (!recipeID) {
-      return res.status(400).json({
-        message: "userID was not provided",
-      });
+      const err: AppError = new AppError(400, "recipeID was not provided.");
+      return res.status(err.statusCode).json(err.getError());
     }
-    const settedFavoriteRecipeID = await insertUserFavoriteRecipe(
+    const userFavoriteRecipes: {
+      recipeID: string;
+    }[] = await UserModel.findUserFavoriteRecipes(userID);
+    if (userFavoriteRecipes.length !== 0) {
+      const err: AppError = new AppError(
+        409,
+        "User has this recipe in favorite."
+      );
+      return res.status(err.statusCode).json(err.getError());
+    }
+
+    const settedFavoriteRecipeID = await UserModel.insertUserFavoriteRecipe(
       recipeID,
       userID
     );

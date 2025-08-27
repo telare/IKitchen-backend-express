@@ -22,6 +22,14 @@ router.get(
   RecipesController.getRecipe
 );
 
+// router.get(
+//   "/:recipeId/db",
+//   authMiddleware,
+//   RecipesService.getRecipeValidationRules("/:recipeId/db"),
+//   validationMiddleware,
+//   RecipesController.getRecipeById
+// );
+
 router.post(
   "/add",
   authMiddleware,
