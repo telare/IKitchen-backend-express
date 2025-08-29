@@ -17,7 +17,7 @@ export async function signUp(req: Request, res: Response, next: NextFunction) {
       value: inputUser.email,
     });
     if (userDBdata) {
-      const error = new AppError(409);
+      const error = new AppError(409, req);
       return res.status(error.statusCode).json(error.getError());
     }
     const hashedPassword = await bcrypt.hash(inputUser.password, 10);
@@ -30,7 +30,7 @@ export async function signUp(req: Request, res: Response, next: NextFunction) {
       securedUser
     );
     if (!settedUser) {
-      const error = new AppError(500,"Error during setting user in db");
+      const error = new AppError(500, req, "Error during setting user in db.");
       throw error.getError();
     }
     const userPayload = { id: settedUser.id };
@@ -57,7 +57,7 @@ export async function logIn(req: Request, res: Response, next: NextFunction) {
       value: inputUser.email,
     });
     if (!userDBdata) {
-      const error = new AppError(401);
+      const error = new AppError(401, req);
       return res.status(error.statusCode).json(error.getError());
     }
 
@@ -67,7 +67,7 @@ export async function logIn(req: Request, res: Response, next: NextFunction) {
       hashedPassword
     );
     if (!isPasswordEqual) {
-      const error = new AppError(401);
+      const error = new AppError(401, req);
       return res.status(error.statusCode).json(error.getError());
     }
 

@@ -30,13 +30,10 @@ export async function getRecipes(
       );
     }
     searchQuery.append("apiKey", apiKey);
-
+    // error handling ! 
     const recipes = await axios.get(url + searchQuery);
-    if (recipes.data) {
-      return res.status(200).json(recipes.data);
-    } else {
-      throw new Error("An unexpected error during a GET recipes");
-    }
+
+    return res.status(200).json(recipes.data);
   } catch (error: unknown) {
     next(error);
   }
@@ -54,12 +51,8 @@ export async function getRecipe(
     const recipe = await axios.get(
       `https://api.spoonacular.com/recipes/${recipeId}/information?&apiKey=${apiKey}`
     );
-    // refactor
-    if (recipe.data) {
-      return res.status(200).json(recipe.data);
-    } else {
-      throw new Error("An unexpected error during a GET random recipes");
-    }
+
+    return res.status(200).json(recipe.data);
   } catch (error: unknown) {
     next(error);
   }
@@ -90,7 +83,7 @@ export async function postRecipe(
     const recipe: InputRecipe = req.body;
     const userID: string | undefined = req.user?.id;
     if (!userID) {
-      const err: AppError = new AppError(400, "userId was not provided");
+      const err: AppError = new AppError(400, req, "userId was not provided.");
       return res.status(err.statusCode).json(err.getError());
     }
 
@@ -98,7 +91,7 @@ export async function postRecipe(
       recipe.title
     );
     if (recipeDb) {
-      const err: AppError = new AppError(409, "Recipe already exists!");
+      const err: AppError = new AppError(409, req, "Recipe already exists.");
       return res.status(err.statusCode).json(err.getError());
     }
 
@@ -107,7 +100,11 @@ export async function postRecipe(
       userID
     );
     if (!recipeID) {
-      const err: AppError = new AppError(500, "Error during insert recipe to a DB");
+      const err: AppError = new AppError(
+        500,
+        req,
+        "Error during insert recipe to a DB."
+      );
       return res.status(err.statusCode).json(err.getError());
     }
 

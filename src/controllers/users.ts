@@ -18,6 +18,7 @@ export async function getUser(
     if (!user) {
       const err: AppError = new AppError(
         500,
+        req,
         "Error during getting user from a DB."
       );
       return res.status(err.statusCode).json(err.getError());
@@ -78,7 +79,11 @@ export async function postUserFavorite(
 
     const { recipeID }: { recipeID: string | undefined } = req.body;
     if (!recipeID) {
-      const err: AppError = new AppError(400, "recipeID was not provided.");
+      const err: AppError = new AppError(
+        400,
+        req,
+        "recipeID was not provided."
+      );
       return res.status(err.statusCode).json(err.getError());
     }
     const userFavoriteRecipes: {
@@ -87,6 +92,7 @@ export async function postUserFavorite(
     if (userFavoriteRecipes.length !== 0) {
       const err: AppError = new AppError(
         409,
+        req,
         "User has this recipe in favorite."
       );
       return res.status(err.statusCode).json(err.getError());

@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { reqErrorFormatter } from "@shared/utils/general";
 import { validationResult } from "express-validator";
-
 export function validationMiddleware(
   req: Request,
   res: Response,
@@ -26,6 +25,7 @@ export function errorMiddleware(
       message: `An unexpected error happened: ${err.message}`,
     });
   } else {
+    console.log(err);
     res.status(500).json({
       message: "An unexpected non-error object was thrown",
     });
