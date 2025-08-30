@@ -2,12 +2,16 @@ import * as AuthService from "services/auth";
 import bcrypt from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
 import * as UserModel from "@drizzle/models/user";
-import { User, UserDB } from "@shared/types/user";
+import { LocalUser, UserDB } from "@shared/types/user";
 import { AppError } from "@shared/utils/AppError";
 
 export async function signUp(req: Request, res: Response, next: NextFunction) {
   try {
-    const inputUser: User = req.body;
+    const inputUser: {
+      name: string;
+      email: string;
+      password: string;
+    } = req.body;
     const secretKey = process.env["JWT_SECRET"];
     if (!secretKey) {
       throw new Error("JWT_SECRET is undefined");
@@ -21,12 +25,16 @@ export async function signUp(req: Request, res: Response, next: NextFunction) {
       return res.status(error.statusCode).json(error.getError());
     }
     const hashedPassword = await bcrypt.hash(inputUser.password, 10);
-    const securedUser: User = {
+    const securedUser: {
+      name: string;
+      email: string;
+      hashedPassword: string;
+    } = {
       name: inputUser.name,
       email: inputUser.email,
-      password: hashedPassword,
+      hashedPassword,
     };
-    const settedUser: UserDB | undefined = await UserModel.insertUser(
+    const settedUser: UserDB | undefined = await UserModel.insertLocalUser(
       securedUser
     );
     if (!settedUser) {
@@ -47,7 +55,11 @@ export async function signUp(req: Request, res: Response, next: NextFunction) {
 
 export async function logIn(req: Request, res: Response, next: NextFunction) {
   try {
-    const inputUser: User = req.body;
+    const inputUser: {
+      name: string;
+      email: string;
+      password: string;
+    } = req.body;
     const secretKey = process.env["JWT_SECRET"];
     if (!secretKey) {
       throw new Error("JWT_SECRET is undefined");
@@ -61,7 +73,14 @@ export async function logIn(req: Request, res: Response, next: NextFunction) {
       return res.status(error.statusCode).json(error.getError());
     }
 
-    const hashedPassword: string = userDBdata.password;
+    const userCredentials: LocalUser | undefined =
+      await UserModel.findUserLocalAccount(userDBdata.id);
+    if (!userCredentials) {
+      const error = new AppError(401, req);
+      return res.status(error.statusCode).json(error.getError());
+    }
+
+    const hashedPassword: string = userCredentials.password;
     const isPasswordEqual: boolean = await bcrypt.compare(
       inputUser.password,
       hashedPassword

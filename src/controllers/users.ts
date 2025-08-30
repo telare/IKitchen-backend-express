@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { UserRequest } from "@shared/types/general";
 import * as UserModel from "@drizzle/models/user";
 import { AppError } from "@shared/utils/AppError";
+import { UserDB } from "@shared/types/user";
 
 export async function getUser(
   req: Request<UserRequest>,
@@ -11,7 +12,7 @@ export async function getUser(
   try {
     const userID: string | undefined = req.params.userID;
 
-    const user = await UserModel.findUser({
+    const user: UserDB | undefined = await UserModel.findUser({
       property: "id",
       value: userID,
     });

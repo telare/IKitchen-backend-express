@@ -1,14 +1,18 @@
-import { eq } from "drizzle-orm";
-import { usersTable } from "@drizzle/schemas/users";
+import { and, eq } from "drizzle-orm";
+import {
+  localAccountsTable,
+  oauthAccountsTable,
+  usersTable,
+} from "@drizzle/schemas/users";
 import { db } from "@drizzle/index";
-import { User, UserDB } from "@shared/types/user";
+import { LocalUser, OauthUser, UserDB } from "@shared/types/user";
 import { favoriteRecipesTable, recipesTable } from "@drizzle/schemas/recipes";
 
 export async function findUsers(): Promise<UserDB[]> {
   const users = await db.select().from(usersTable);
   return users;
 }
-// make separate func findUserID etc
+
 export async function findUser({
   property,
   value,
@@ -22,6 +26,39 @@ export async function findUser({
     .from(usersTable)
     .where(whereEQ);
   return user[0];
+}
+
+export async function findUserLocalAccount(
+  userId: string
+): Promise<LocalUser | undefined> {
+  const [account] = await db
+    .select({
+      userId: localAccountsTable.user_id,
+      password: localAccountsTable.password,
+    })
+    .from(localAccountsTable)
+    .where(eq(localAccountsTable.user_id, userId));
+  return account;
+}
+
+export async function findUserOauthAccount(
+  userId: string,
+  provider: string
+): Promise<OauthUser | undefined> {
+  const [account] = await db
+    .select({
+      userId: oauthAccountsTable.userId,
+      provider: oauthAccountsTable.provider,
+      providerAccountID: oauthAccountsTable.provider_account_id,
+    })
+    .from(oauthAccountsTable)
+    .where(
+      and(
+        eq(oauthAccountsTable.userId, userId),
+        eq(oauthAccountsTable.provider, provider)
+      )
+    );
+  return account;
 }
 export async function findUserFavoriteRecipes(userID: string): Promise<
   {
@@ -41,9 +78,7 @@ export async function findUserFavoriteRecipes(userID: string): Promise<
     .where(eq(favoriteRecipesTable.user_id, userID));
   return favoriteRecipes;
 }
-export async function findUserRecipes(
-  userID: string
-){
+export async function findUserRecipes(userID: string) {
   const recipes = await db
     .select({
       recipeID: recipesTable.id,
@@ -53,10 +88,41 @@ export async function findUserRecipes(
     .where(eq(recipesTable.author_id, userID));
   return recipes;
 }
-export async function insertUser(userData: User): Promise<UserDB | undefined> {
+export async function insertUser(userData: {
+  name: string;
+  email: string;
+  hashedPassword: string;
+}): Promise<UserDB | undefined> {
   const [settedUser] = await db.insert(usersTable).values(userData).returning();
   return settedUser;
 }
+export async function insertLocalUser(userData: {
+  name: string;
+  email: string;
+  hashedPassword: string;
+}): Promise<UserDB | undefined> {
+  const [settedUser] = await db.insert(usersTable).values(userData).returning();
+  if (!settedUser) throw new Error("Failed insert user into usersTable");
+  const [account] = await db
+    .insert(localAccountsTable)
+    .values({
+      user_id: settedUser.id,
+      password: userData.hashedPassword,
+    })
+    .returning();
+  if (!account)
+    throw new Error("Failed insert user's credentials into localAccountsTable");
+  return settedUser;
+}
+export async function insertOauthUser(userData: {
+  name: string;
+  email: string;
+  hashedPassword: string;
+}): Promise<UserDB | undefined> {
+  const [settedUser] = await db.insert(usersTable).values(userData).returning();
+  return settedUser;
+}
+
 export async function insertUserFavoriteRecipe(
   recipeID: string,
   userID: string
