@@ -133,3 +133,7 @@ export async function insertUserFavoriteRecipe(
     .returning();
   return insertedFavoriteRecipe[0]?.recipe_id;
 }
+
+export async function truncateUsersTable() {
+  await db.delete(usersTable);
+}

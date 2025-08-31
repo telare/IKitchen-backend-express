@@ -46,7 +46,7 @@ export const oauthAccountsTable = pgTable(
     // primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
   ]
 );
-
+// add accounts relations
 export const userRelations = relations(usersTable, ({ many }) => ({
   // accounts: many(userAccountsTable)
   recipes: many(recipesTable),
