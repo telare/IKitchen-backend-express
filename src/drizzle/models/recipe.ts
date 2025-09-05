@@ -17,7 +17,7 @@ export async function insertRecipe(
   try {
     const formattedRecipe = {
       ...recipe,
-      author_id: userID,
+      authorID: userID,
 
       prep_hrs: recipe.prep.hrs,
       prep_mins: recipe.prep.mins,
@@ -37,7 +37,7 @@ export async function insertRecipe(
     // IMAGES
     const recipeImages = recipe.imageURL.map((url) => ({
       imageURL: url,
-      recipe_id: recipeID,
+      recipeID: recipeID,
     }));
 
     const settedImages = await db
@@ -51,7 +51,7 @@ export async function insertRecipe(
     // COOK TIPS
     const cookTips = recipe.cookTips.map((tip) => ({
       tip: tip,
-      recipe_id: recipeID,
+      recipeID: recipeID,
     }));
     const settedCookTips = await db
       .insert(recipeCookTipsTable)
@@ -65,7 +65,7 @@ export async function insertRecipe(
 
     // INSTRUCTIONS
     const instructions = recipe.instructions.map((instruction, index) => ({
-      recipe_id: recipeID,
+      recipeID: recipeID,
       step: index + 1,
       instruction: instruction.step,
     }));
@@ -83,7 +83,7 @@ export async function insertRecipe(
     const ingredients = recipe.ingredients.map((ing) => ({
       name: ing.name,
       quantity: ing.quantity.toString(),
-      recipe_id: recipeID,
+      recipeID: recipeID,
       unit: ing.unit,
     }));
 
@@ -99,7 +99,7 @@ export async function insertRecipe(
     // TAGS
     const tags = recipe.tags.map((tag) => ({
       name: tag,
-      recipe_id: recipeID,
+      recipeID: recipeID,
     }));
     const settedTags = await db
       .insert(recipeTagsTable)
@@ -127,23 +127,23 @@ export async function findRecipeByTitle(
   const images = await db
     .select()
     .from(recipeImagesTable)
-    .where(eq(recipeImagesTable.recipe_id, id));
+    .where(eq(recipeImagesTable.recipeID, id));
   const instructions = await db
     .select()
     .from(recipeInstructionsTable)
-    .where(eq(recipeInstructionsTable.recipe_id, id));
+    .where(eq(recipeInstructionsTable.recipeID, id));
   const ingredients = await db
     .select()
     .from(recipeIngredientsTable)
-    .where(eq(recipeIngredientsTable.recipe_id, id));
+    .where(eq(recipeIngredientsTable.recipeID, id));
   const tags = await db
     .select()
     .from(recipeTagsTable)
-    .where(eq(recipeTagsTable.recipe_id, id));
+    .where(eq(recipeTagsTable.recipeID, id));
   const cookTips = await db
     .select()
     .from(recipeCookTipsTable)
-    .where(eq(recipeCookTipsTable.recipe_id, id));
+    .where(eq(recipeCookTipsTable.recipeID, id));
   if (
     images.length === 0 ||
     instructions.length === 0 ||
@@ -188,23 +188,23 @@ export async function findRecipeById(id: string): Promise<Recipe> {
   const images = await db
     .select()
     .from(recipeImagesTable)
-    .where(eq(recipeImagesTable.recipe_id, id));
+    .where(eq(recipeImagesTable.recipeID, id));
   const instructions = await db
     .select()
     .from(recipeInstructionsTable)
-    .where(eq(recipeInstructionsTable.recipe_id, id));
+    .where(eq(recipeInstructionsTable.recipeID, id));
   const ingredients = await db
     .select()
     .from(recipeIngredientsTable)
-    .where(eq(recipeIngredientsTable.recipe_id, id));
+    .where(eq(recipeIngredientsTable.recipeID, id));
   const tags = await db
     .select()
     .from(recipeTagsTable)
-    .where(eq(recipeTagsTable.recipe_id, id));
+    .where(eq(recipeTagsTable.recipeID, id));
   const cookTips = await db
     .select()
     .from(recipeCookTipsTable)
-    .where(eq(recipeCookTipsTable.recipe_id, id));
+    .where(eq(recipeCookTipsTable.recipeID, id));
   if (
     !recipe ||
     images.length === 0 ||

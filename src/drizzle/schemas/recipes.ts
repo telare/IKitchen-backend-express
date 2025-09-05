@@ -13,7 +13,7 @@ export const recipesTable = pgTable("recipes", {
   id: uuid()
     .primaryKey()
     .default(sql`gen_random_uuid()`),
-  author_id: uuid()
+  authorID: uuid()
     .notNull()
     .references(() => usersTable.id, {
       onDelete: "cascade",
@@ -21,17 +21,17 @@ export const recipesTable = pgTable("recipes", {
   title: varchar({ length: 255 }).notNull().unique(),
   description: text().notNull(),
   servings: integer().notNull(),
-  prep_hrs: integer().notNull(),
-  prep_mins: integer().notNull(),
-  cook_hrs: integer().notNull(),
-  cook_mins: integer().notNull(),
+  prepHrs: integer().notNull(),
+  prepMins: integer().notNull(),
+  cookHrs: integer().notNull(),
+  cookMins: integer().notNull(),
 });
 
 export const recipeInstructionsTable = pgTable("recipeInstructions", {
   id: uuid()
     .primaryKey()
     .default(sql`gen_random_uuid()`),
-  recipe_id: uuid()
+  recipeID: uuid()
     .notNull()
     .references(() => recipesTable.id, {
       onDelete: "cascade",
@@ -44,7 +44,7 @@ export const recipeIngredientsTable = pgTable("recipeIngredients", {
   id: uuid()
     .primaryKey()
     .default(sql`gen_random_uuid()`),
-  recipe_id: uuid()
+  recipeID: uuid()
     .notNull()
     .references(() => recipesTable.id, {
       onDelete: "cascade",
@@ -58,7 +58,7 @@ export const recipeTagsTable = pgTable("recipeTags", {
   id: uuid()
     .primaryKey()
     .default(sql`gen_random_uuid()`),
-  recipe_id: uuid()
+  recipeID: uuid()
     .notNull()
     .references(() => recipesTable.id, {
       onDelete: "cascade",
@@ -70,7 +70,7 @@ export const recipeImagesTable = pgTable("recipeImages", {
   id: uuid()
     .primaryKey()
     .default(sql`gen_random_uuid()`),
-  recipe_id: uuid()
+  recipeID: uuid()
     .notNull()
     .references(() => recipesTable.id, {
       onDelete: "cascade",
@@ -82,7 +82,7 @@ export const recipeCookTipsTable = pgTable("recipeCookTips", {
   id: uuid()
     .primaryKey()
     .default(sql`gen_random_uuid()`),
-  recipe_id: uuid()
+  recipeID: uuid()
     .notNull()
     .references(() => recipesTable.id, {
       onDelete: "cascade",
@@ -94,12 +94,12 @@ export const favoriteRecipesTable = pgTable("favoriteRecipes", {
   id: uuid()
     .primaryKey()
     .default(sql`gen_random_uuid()`),
-  user_id: uuid()
+  userID: uuid()
     .notNull()
     .references(() => usersTable.id, {
       onDelete: "cascade",
     }),
-  recipe_id: uuid()
+  recipeID: uuid()
     .notNull()
     .references(() => recipesTable.id, {
       onDelete: "cascade",

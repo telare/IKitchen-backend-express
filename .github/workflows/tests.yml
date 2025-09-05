@@ -2,6 +2,15 @@ name: Unit tests
 
 on: push
 
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  FOOD_API_KEY: ${{ secrets.FOOD_API_KEY }}
+  GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+  GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  PORT: ${{ vars.PORT }}
+  BASE_URL: ${{ vars.BASE_URL }}
+
 jobs:
   auth-tests:
     runs-on: ubuntu-latest
@@ -19,10 +28,10 @@ jobs:
         run: npm ci
 
       - name: Start dev server in background
-        run: npm run dev &
+        run: npm run dev:no-env &
 
       - name: Wait for server
-        run: npx wait-on http://localhost:3000
+        run: npx wait-on tcp:3000 --timeout 3000
 
       - name: Run tests
         run: npm run test:unit:auth

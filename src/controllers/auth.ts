@@ -17,9 +17,10 @@ export async function signUp(req: Request, res: Response, next: NextFunction) {
       throw new Error("JWT_SECRET is undefined");
     }
     const userDBdata: UserDB | undefined = await UserModel.findUser({
-      property: "email",
-      value: inputUser.email,
-    });
+      name: inputUser.name,
+      email: inputUser.email
+    }); 
+    console.log("userDBdata: ",userDBdata)
     if (userDBdata) {
       const error = new AppError(409, req);
       return res.status(error.statusCode).json(error.getError());
@@ -65,8 +66,8 @@ export async function logIn(req: Request, res: Response, next: NextFunction) {
       throw new Error("JWT_SECRET is undefined");
     }
     const userDBdata: UserDB | undefined = await UserModel.findUser({
-      property: "email",
-      value: inputUser.email,
+      name: inputUser.name,
+      email: inputUser.email
     });
     if (!userDBdata) {
       const error = new AppError(401, req);
@@ -98,6 +99,33 @@ export async function logIn(req: Request, res: Response, next: NextFunction) {
     AuthService.setAuthCookies(res, JWTtokens);
     return res.status(200).json({
       message: "Successfully authorized.",
+    });
+  } catch (error: unknown) {
+    return next(error);
+  }
+}
+
+export async function googleOAuth(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const user = req.user;
+    if (!user) throw new Error("req.user fails");
+    const userTokenPayload = user;
+    const secretKey: string | undefined = process.env["JWT_SECRET"];
+    if (!secretKey) throw new Error("An unexpected jwt secrets");
+    const { accessToken, refreshToken } = AuthService.generateJWTtokens(
+      userTokenPayload,
+      secretKey
+    );
+    AuthService.setAuthCookies(res, {
+      accessToken,
+      refreshToken,
+    });
+    res.status(201).json({
+      message: "Successfully log-in with Google",
     });
   } catch (error: unknown) {
     return next(error);

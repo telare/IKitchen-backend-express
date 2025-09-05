@@ -83,7 +83,7 @@ export async function postRecipe(
     const recipe: InputRecipe = req.body;
     const userID: string | undefined = req.user?.id;
     if (!userID) {
-      const err: AppError = new AppError(400, req, "userId was not provided.");
+      const err: AppError = new AppError(400, req, "userID was not provided.");
       return res.status(err.statusCode).json(err.getError());
     }
 

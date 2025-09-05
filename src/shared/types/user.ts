@@ -7,15 +7,13 @@ export type UserProviderCredentials = {
   provider: string;
   password: string | null;
   providerAccountID: string | null;
-  accessToken: string | null;
-  refreshToken: string | null;
 };
 export type LocalUser = {
-  userId: string;
+  userID: string;
   password: string;
 };
 export type OauthUser = {
-  userId: string;
+  userID: string;
   provider: string;
   providerAccountID: string;
 };

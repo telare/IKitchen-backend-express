@@ -29,6 +29,15 @@ test.describe("Sign-up", () => {
     expect(response.status()).toBe(400);
   });
 
+  test("sign-up failed: duplicate name", async ({ request }) => {
+    await request.post("auth/sign-up", { data: mockUser });
+    const response = await request.post("auth/sign-up", {
+      data: {...mockUser, email:"test_user1@gmail.com"},
+    });
+    expect(response.ok()).toBeFalsy();
+    expect(response.status()).toBe(409);
+  });
+  
   test("sign-up failed: duplicate email", async ({ request }) => {
     await request.post("auth/sign-up", { data: mockUser });
     const response = await request.post("auth/sign-up", {

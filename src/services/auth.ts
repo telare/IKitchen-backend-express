@@ -1,6 +1,9 @@
 import jwt from "jsonwebtoken";
 import { Response } from "express";
 import { body, ValidationChain } from "express-validator";
+import { Strategy } from "passport-google-oauth2";
+import * as UserModel from "@drizzle/models/user";
+import { UserDB } from "@shared/types/user";
 
 export const authReqBodyRules = {
   name: body("name")
@@ -75,4 +78,84 @@ export function tokenVerify(token: string, secret: string) {
   } catch (err: unknown) {
     throw new Error("Unauthorized: token expired");
   }
+}
+
+export function getGoogleStrategy({
+  clientID,
+  clientSecret,
+  callbackURL = "http://localhost:3000/api/v1/auth/log-in/oauth/google/callback",
+  scope = ["profile", "email"],
+}: {
+  clientID: string;
+  clientSecret: string;
+  callbackURL?: string;
+  scope?: string[];
+}) {
+  return new Strategy(
+    {
+      clientID,
+      clientSecret,
+      callbackURL,
+      scope,
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        const userDB = await UserModel.findUser({
+          property: "email",
+          value: profile.email,
+        });
+        console.log("userDB ", userDB);
+        
+        if (!userDB) {
+          const userData = {
+            name: (profile.displayName as string).replace(" ", "_"),
+            email: profile.email,
+          };
+          // make as a transaction
+          const insertedUser = await UserModel.insertUser(userData);
+          if (!insertedUser)
+            throw new Error("Inserting user into the Users table failed");
+          await UserModel.insertOauthUser({
+            provider: "google",
+            providerAccountID: profile.id,
+            userID: insertedUser.id,
+          });
+        } else {
+          console.log("UsersTable +")
+          const userDBOauthAccount = await UserModel.findUserOauthAccount(
+            userDB.id,
+            "google"
+          );
+          console.log(userDBOauthAccount)
+          if (!userDBOauthAccount) {
+            await UserModel.insertOauthUser({
+              provider: "google",
+              providerAccountID: profile.id,
+              userID: userDB.id,
+            });
+          } else {
+            await UserModel.updateOauthUser({
+              provider: "google",
+              providerAccountID: profile.id,
+              userID: userDB.id,
+            });
+          }
+        }
+        const user = {
+          name: profile.displayName,
+          photo: profile.photos[0].value,
+          email: profile.email,
+          emailVerified: profile.email_verified,
+          accessToken,
+          refreshToken,
+        };
+        done(null, user);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          return done(err.message);
+        }
+        done(err);
+      }
+    }
+  );
 }

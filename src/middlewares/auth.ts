@@ -37,4 +37,3 @@ export function authMiddleware(
     next(err);
   }
 }
-// Oauth !
