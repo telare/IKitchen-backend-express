@@ -20,7 +20,6 @@ export async function signUp(req: Request, res: Response, next: NextFunction) {
       name: inputUser.name,
       email: inputUser.email
     }); 
-    console.log("userDBdata: ",userDBdata)
     if (userDBdata) {
       const error = new AppError(409, req);
       return res.status(error.statusCode).json(error.getError());
@@ -47,7 +46,7 @@ export async function signUp(req: Request, res: Response, next: NextFunction) {
       AuthService.generateJWTtokens(userPayload, secretKey);
     AuthService.setAuthCookies(res, JWTtokens);
     return res.status(201).json({
-      message: `User has been created successfully.`,
+      message: "User has been created successfully.",
     });
   } catch (error: unknown) {
     return next(error);

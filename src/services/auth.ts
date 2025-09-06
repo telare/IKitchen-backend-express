@@ -3,7 +3,6 @@ import { Response } from "express";
 import { body, ValidationChain } from "express-validator";
 import { Strategy } from "passport-google-oauth2";
 import * as UserModel from "@drizzle/models/user";
-import { UserDB } from "@shared/types/user";
 
 export const authReqBodyRules = {
   name: body("name")
@@ -76,6 +75,9 @@ export function tokenVerify(token: string, secret: string) {
     const payload = jwt.verify(token, secret);
     return payload;
   } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw new Error(`Unauthorized: token expired. ${err.message}`);
+    }
     throw new Error("Unauthorized: token expired");
   }
 }
@@ -101,11 +103,9 @@ export function getGoogleStrategy({
     async (accessToken, refreshToken, profile, done) => {
       try {
         const userDB = await UserModel.findUser({
-          property: "email",
-          value: profile.email,
+          name: profile.displayName,
+          email: profile.email,
         });
-        console.log("userDB ", userDB);
-        
         if (!userDB) {
           const userData = {
             name: (profile.displayName as string).replace(" ", "_"),
@@ -121,12 +121,10 @@ export function getGoogleStrategy({
             userID: insertedUser.id,
           });
         } else {
-          console.log("UsersTable +")
           const userDBOauthAccount = await UserModel.findUserOauthAccount(
             userDB.id,
             "google"
           );
-          console.log(userDBOauthAccount)
           if (!userDBOauthAccount) {
             await UserModel.insertOauthUser({
               provider: "google",

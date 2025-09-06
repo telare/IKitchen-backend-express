@@ -12,7 +12,9 @@
     "dev": "nodemon --exec tsx --env-file=.env ./src/app.ts",
     "dev:no-env": "nodemon --exec tsx ./src/app.ts",
     "test:unit": "npx playwright test",
-    "test:unit:auth": "npx playwright test tests/unit/auth.spec.ts"
+    "test:unit:auth": "npx playwright test tests/unit/auth.spec.ts",
+    "lint": "eslint .",
+    "prepare": "husky"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",
@@ -23,6 +25,7 @@
     "express": "^5.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.35.0",
     "@playwright/test": "^1.55.0",
     "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.3",
@@ -32,7 +35,11 @@
     "@types/passport-google-oauth2": "^0.1.10",
     "axios": "^1.11.0",
     "drizzle-kit": "^0.31.4",
+    "eslint": "^9.35.0",
     "express-validator": "^7.2.1",
+    "globals": "^16.3.0",
+    "husky": "^9.1.7",
+    "jiti": "^2.5.1",
     "jose": "^6.0.12",
     "jsonwebtoken": "^9.0.2",
     "nodemon": "^3.1.10",
@@ -40,6 +47,7 @@
     "passport-google-oauth2": "^0.2.0",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0",
     "wait-on": "^8.0.4"
   }
 }

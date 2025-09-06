@@ -14,105 +14,98 @@ export async function insertRecipe(
   recipe: InputRecipe,
   userID: string
 ): Promise<string | undefined> {
-  try {
-    const formattedRecipe = {
-      ...recipe,
-      authorID: userID,
+  const formattedRecipe = {
+    ...recipe,
+    authorID: userID,
 
-      prep_hrs: recipe.prep.hrs,
-      prep_mins: recipe.prep.mins,
+    prepHrs: recipe.prep.hrs,
+    prepMins: recipe.prep.mins,
 
-      cook_hrs: recipe.cook.hrs,
-      cook_mins: recipe.cook.mins,
-    };
-    const [settedRecipe] = await db
-      .insert(recipesTable)
-      .values(formattedRecipe)
-      .returning();
-    if (!settedRecipe || !settedRecipe.id) {
-      throw new Error("Recipe insert failed");
-    }
-    const recipeID: string = settedRecipe.id;
-
-    // IMAGES
-    const recipeImages = recipe.imageURL.map((url) => ({
-      imageURL: url,
-      recipeID: recipeID,
-    }));
-
-    const settedImages = await db
-      .insert(recipeImagesTable)
-      .values(recipeImages)
-      .returning();
-    if (settedImages.length !== recipeImages.length) {
-      throw new Error(`Recipe's image  insert failed. Recipe id: ${recipeID}`);
-    }
-
-    // COOK TIPS
-    const cookTips = recipe.cookTips.map((tip) => ({
-      tip: tip,
-      recipeID: recipeID,
-    }));
-    const settedCookTips = await db
-      .insert(recipeCookTipsTable)
-      .values(cookTips)
-      .returning();
-    if (settedCookTips.length !== cookTips.length) {
-      throw new Error(
-        `Recipe's cook tips  insert failed. Recipe id: ${recipeID}`
-      );
-    }
-
-    // INSTRUCTIONS
-    const instructions = recipe.instructions.map((instruction, index) => ({
-      recipeID: recipeID,
-      step: index + 1,
-      instruction: instruction.step,
-    }));
-    const settedInstructions = await db
-      .insert(recipeInstructionsTable)
-      .values(instructions)
-      .returning();
-    if (settedInstructions.length !== instructions.length) {
-      throw new Error(
-        `Recipe's instruction insert failed. Recipe id: ${recipeID}`
-      );
-    }
-
-    // INGREDIENTS
-    const ingredients = recipe.ingredients.map((ing) => ({
-      name: ing.name,
-      quantity: ing.quantity.toString(),
-      recipeID: recipeID,
-      unit: ing.unit,
-    }));
-
-    const settedIngredients = await db
-      .insert(recipeIngredientsTable)
-      .values(ingredients)
-      .returning();
-
-    if (settedIngredients.length !== ingredients.length) {
-      throw new Error(`Recipe's tags insert failed. Recipe id: ${recipeID}`);
-    }
-
-    // TAGS
-    const tags = recipe.tags.map((tag) => ({
-      name: tag,
-      recipeID: recipeID,
-    }));
-    const settedTags = await db
-      .insert(recipeTagsTable)
-      .values(tags)
-      .returning();
-    if (settedTags.length !== tags.length) {
-      throw new Error(`Recipe's tags insert failed. Recipe id: ${recipeID}`);
-    }
-
-    return recipeID;
-  } catch (err: unknown) {
-    throw err;
+    cookHrs: recipe.cook.hrs,
+    cookMins: recipe.cook.mins,
+  };
+  const [settedRecipe] = await db
+    .insert(recipesTable)
+    .values(formattedRecipe)
+    .returning();
+  if (!settedRecipe || !settedRecipe.id) {
+    throw new Error("Recipe insert failed");
   }
+  const recipeID: string = settedRecipe.id;
+
+  // IMAGES
+  const recipeImages = recipe.imageURL.map((url) => ({
+    imageURL: url,
+    recipeID: recipeID,
+  }));
+
+  const settedImages = await db
+    .insert(recipeImagesTable)
+    .values(recipeImages)
+    .returning();
+  if (settedImages.length !== recipeImages.length) {
+    throw new Error(`Recipe's image  insert failed. Recipe id: ${recipeID}`);
+  }
+
+  // COOK TIPS
+  const cookTips = recipe.cookTips.map((tip) => ({
+    tip: tip,
+    recipeID: recipeID,
+  }));
+  const settedCookTips = await db
+    .insert(recipeCookTipsTable)
+    .values(cookTips)
+    .returning();
+  if (settedCookTips.length !== cookTips.length) {
+    throw new Error(
+      `Recipe's cook tips  insert failed. Recipe id: ${recipeID}`
+    );
+  }
+
+  // INSTRUCTIONS
+  const instructions = recipe.instructions.map((instruction, index) => ({
+    recipeID: recipeID,
+    step: index + 1,
+    instruction: instruction.step,
+  }));
+  const settedInstructions = await db
+    .insert(recipeInstructionsTable)
+    .values(instructions)
+    .returning();
+  if (settedInstructions.length !== instructions.length) {
+    throw new Error(
+      `Recipe's instruction insert failed. Recipe id: ${recipeID}`
+    );
+  }
+
+  // INGREDIENTS
+  const ingredients = recipe.ingredients.map((ing) => ({
+    name: ing.name,
+    quantity: ing.quantity.toString(),
+    recipeID: recipeID,
+    unit: ing.unit,
+  }));
+
+  const settedIngredients = await db
+    .insert(recipeIngredientsTable)
+    .values(ingredients)
+    .returning();
+
+  if (settedIngredients.length !== ingredients.length) {
+    throw new Error(`Recipe's tags insert failed. Recipe id: ${recipeID}`);
+  }
+
+  // TAGS
+  const tags = recipe.tags.map((tag) => ({
+    name: tag,
+    recipeID: recipeID,
+  }));
+  const settedTags = await db.insert(recipeTagsTable).values(tags).returning();
+  if (settedTags.length !== tags.length) {
+    throw new Error(`Recipe's tags insert failed. Recipe id: ${recipeID}`);
+  }
+
+  return recipeID;
 }
 
 export async function findRecipeByTitle(
@@ -160,12 +153,12 @@ export async function findRecipeByTitle(
     description: recipe.description,
     servings: recipe.servings,
     prep: {
-      hrs: recipe.prep_hrs,
-      mins: recipe.prep_mins,
+      hrs: recipe.prepHrs,
+      mins: recipe.prepMins,
     },
     cook: {
-      hrs: recipe.cook_hrs,
-      mins: recipe.cook_mins,
+      hrs: recipe.cookHrs,
+      mins: recipe.cookMins,
     },
     tags: tags.map((tag) => tag.name),
     ingredients: ingredients.map((ingr) => ({
@@ -213,14 +206,6 @@ export async function findRecipeById(id: string): Promise<Recipe> {
     tags.length === 0 ||
     cookTips.length === 0
   ) {
-    console.log(
-      recipe,
-      images.length,
-      instructions.length,
-      ingredients.length,
-      tags.length,
-      cookTips.length
-    );
     throw new Error("Error in findRecipeById function");
   }
   const result = {
@@ -230,12 +215,12 @@ export async function findRecipeById(id: string): Promise<Recipe> {
     description: recipe.description,
     servings: recipe.servings,
     prep: {
-      hrs: recipe.prep_hrs,
-      mins: recipe.prep_mins,
+      hrs: recipe.prepHrs,
+      mins: recipe.prepMins,
     },
     cook: {
-      hrs: recipe.cook_hrs,
-      mins: recipe.cook_mins,
+      hrs: recipe.cookHrs,
+      mins: recipe.cookMins,
     },
     tags: tags.map((tag) => tag.name),
     ingredients: ingredients.map((ingr) => ({

@@ -52,7 +52,6 @@ test.describe("Sign-up", () => {
     const response = await request.post("auth/sign-up", {
       data: { ...mockUser, password: "" },
     });
-    const expectedStatusCode: number = 400;
 
     expect(response.ok()).toBeFalsy();
     expect(response.status()).toBe(400);
@@ -71,7 +70,7 @@ test.describe("Sign-up", () => {
   });
   test.afterEach(async ()=>{
     await truncateUsersTable();
-  })
+  });
 });
 
 test.describe("Log-in", () => {

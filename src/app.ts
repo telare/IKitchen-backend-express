@@ -32,5 +32,6 @@ app.use("/api/v1/users", userRoutes);
 app.use(errorMiddleware);
 
 app.listen(3000, () => {
+  // eslint-disable-next-line no-console
   console.log(`Your server is listening on: http://localhost:${PORT}/api`);
 });

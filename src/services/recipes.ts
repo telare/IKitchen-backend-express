@@ -38,7 +38,7 @@ const recipeValidationRules = {
     body("prep").isObject().withMessage("prep must be an object"),
     body("prep.hrs")
       .isInt({ min: 0, max: 24 })
-      .withMessage("prep_hrs must be an integet between 0 and 24"),
+      .withMessage("prepHrs must be an integet between 0 and 24"),
     body("prep.mins")
       .isInt({ min: 0, max: 59 })
       .withMessage("prep_min must be an integet between 0 and 59"),
@@ -46,10 +46,10 @@ const recipeValidationRules = {
     body("cook").isObject().withMessage("cook must be an object"),
     body("cook.hrs")
       .isInt({ min: 0, max: 24 })
-      .withMessage("cook_hrs must be an integet between 0 and 24"),
+      .withMessage("cookHrs must be an integet between 0 and 24"),
     body("cook.mins")
       .isInt({ min: 0, max: 59 })
-      .withMessage("cook_mins must be an integet between 0 and 59"),
+      .withMessage("cookMins must be an integet between 0 and 59"),
 
     body("ingredients")
       .isArray({ min: 1 })

@@ -17,14 +17,17 @@ export function errorMiddleware(
   err: unknown,
   req: Request,
   res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction
 ) {
   if (err instanceof Error) {
+    // eslint-disable-next-line no-console
     console.log(err.message);
     res.status(500).json({
       message: `An unexpected error happened: ${err.message}`,
     });
   } else {
+    // eslint-disable-next-line no-console
     console.log(err);
     res.status(500).json({
       message: "An unexpected non-error object was thrown",

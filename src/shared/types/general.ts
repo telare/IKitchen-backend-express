@@ -1,9 +1,9 @@
-import {Request} from "express"
+import { Request } from "express";
 export type AuthRequest = Request & {
   user?: {
     id: string;
   };
 };
 export type UserRequest = {
-  userID:string;
+  userID: string;
 };
