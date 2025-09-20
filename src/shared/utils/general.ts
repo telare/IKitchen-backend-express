@@ -10,3 +10,14 @@ export function reqErrorFormatter(error: ValidationError): string {
 
   return result;
 }
+
+export function getCacheKey(...args: string[]): string {
+  return `${args.join(":")}`;
+}
+export function getRecipeCacheKey(id:string): string {
+  return getCacheKey("recipe", id);
+}
+export function getUserCacheKey(id:string): string {
+  return getCacheKey("user", id);
+}
+

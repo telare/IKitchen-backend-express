@@ -2,8 +2,10 @@ import * as RecipeModel from "@drizzle/models/recipe";
 import { AuthRequest } from "@shared/types/general";
 import { InputRecipe, Recipe } from "@shared/types/recipe";
 import { AppError } from "@shared/utils/AppError";
+import { getRecipeCacheKey } from "@shared/utils/general";
 import axios from "axios";
 import { NextFunction, Request, Response } from "express";
+import initRedisClient from "lib/redisClient";
 
 export async function getRecipes(
   req: Request,
@@ -30,7 +32,7 @@ export async function getRecipes(
       );
     }
     searchQuery.append("apiKey", apiKey);
-    // error handling ! 
+    // error handling !
     const recipes = await axios.get(url + searchQuery);
 
     return res.status(200).json(recipes.data);
@@ -48,9 +50,25 @@ export async function getRecipe(
     const apiKey = process.env["FOOD_API_KEY"];
     if (!apiKey) throw new Error("apikey is not defined");
     const recipeId: string | undefined = req.params["recipeId"]!;
+    const redisClient = await initRedisClient();
+    if (!redisClient) throw new Error("Unexpected redis client");
+    const cacheKey: string = getRecipeCacheKey(recipeId);
+    const cachedRecipe: string | null = await redisClient.get(cacheKey);
+    if (cachedRecipe) return res.status(200).json(JSON.parse(cachedRecipe));
+
     const recipe = await axios.get(
       `https://api.spoonacular.com/recipes/${recipeId}/information?&apiKey=${apiKey}`
     );
+    const hashData = JSON.stringify(recipe.data);
+    const isCachedRecipe: string | null = await redisClient.set(
+      cacheKey,
+      hashData,
+      {
+        EX: 60,
+      }
+    );
+    // eslint-disable-next-line no-console
+    console.log(`Cached: ${isCachedRecipe}`);
 
     return res.status(200).json(recipe.data);
   } catch (error: unknown) {

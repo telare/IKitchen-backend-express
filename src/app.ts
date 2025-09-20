@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import express from "express";
 import authRoutes from "./routes/authRoutes";
 import recipesRoutes from "./routes/recipesRoutes";
@@ -6,6 +7,8 @@ import cookieParser from "cookie-parser";
 import passport from "passport";
 import { errorMiddleware } from "middlewares/general";
 import { getGoogleStrategy } from "services/auth";
+import initRedisClient from "lib/redisClient";
+import { limiter } from "lib/rateLimiter";
 
 export const app = express();
 const PORT = process.env["PORT"];
@@ -16,6 +19,10 @@ if (!PORT) {
 }
 if (!googleClientID || !googleClientSecret)
   throw new Error("GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET is undefined");
+
+await initRedisClient();
+
+app.use(limiter);
 
 app.use(passport.initialize());
 passport.use(
@@ -31,7 +38,6 @@ app.use("/api/v1/recipes", recipesRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use(errorMiddleware);
 
-app.listen(3000, () => {
-  // eslint-disable-next-line no-console
+app.listen(3000, async () => {
   console.log(`Your server is listening on: http://localhost:${PORT}/api`);
 });
