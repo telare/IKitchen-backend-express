@@ -1,4 +1,4 @@
-version: "0"
+version: "3.8"
 services:
   redis:
     image: redis
@@ -14,7 +14,15 @@ services:
       - "5540:5540"
     networks:
       - redis-net
+    volumes:
+      - type: volume
+        source: redis-insight-data
+        target: /app/volume-data
 
 networks:
   redis-net:
     driver: bridge
+
+volumes:
+  redis-insight-data: 
+    driver: local

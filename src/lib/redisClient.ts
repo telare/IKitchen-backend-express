@@ -6,6 +6,7 @@ if (!host) throw new Error("Unexpected redis host endpoint");
 
 const port: string | undefined = process.env["REDIS_HOST_PORT"];
 if (!port) throw new Error("Unexpected redis host port");
+
 const portNumber: number = Number(port);
 
 let redisClient: RedisClientType | undefined;
