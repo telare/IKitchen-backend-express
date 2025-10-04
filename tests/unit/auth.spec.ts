@@ -1,73 +1,87 @@
-import test, { expect } from "@playwright/test";
+import test, { APIResponse, expect } from "@playwright/test";
 import mockUser from "./fixtures/user.json" with { type: "json" };
-// update tsconfig to handle aliases there
-// linting
-import {truncateUsersTable} from "../../src/drizzle/models/user";
+import {truncateUsersTable} from "@drizzle/models/user";
+import { AppErrorMessage } from "@shared/utils/AppError";
+import { AppResponseMessage } from "@shared/utils/AppResponse";
+
+async function checkBody(response:APIResponse, success:boolean = true) {
+  const body = await response.json();
+  let properties:(keyof AppErrorMessage | keyof AppResponseMessage)[] = ["status", "title", "detail", "instance", "errors"];
+  if(success) properties = ["status", "data", "message", "apiVersion", "pagination", "meta"];
+  for (const prop of properties){
+    expect(body).toHaveProperty(prop);
+  }
+}
 
 test.describe("Sign-up", () => {
-  test("sign-up passed", async ({ request }) => {
-    const response = await request.post("auth/sign-up", {
-      data: mockUser,
+  test.describe("Passed", () => {
+    test("sign-up passed", async ({ request }) => {
+      const response = await request.post("auth/sign-up", {
+        data: mockUser,
+      });
+      expect(response.ok()).toBeTruthy();
+      expect(response.status()).toBe(201);
+      await checkBody(response);
+      const setCookie = response.headers()["set-cookie"];
+      expect(setCookie).toBeDefined();
     });
-    expect(response.ok()).toBeTruthy();
-    expect(response.status()).toBe(201);
-
-    const settedUser = await response.json();
-    expect(settedUser).toHaveProperty(
-      "message",
-      "User has been created successfully."
-    );
-    const setCookie = response.headers()["set-cookie"];
-    expect(setCookie).toBeDefined();
   });
 
-  test("sign-up failed: missing fields", async ({ request }) => {
-    const response = await request.post("auth/sign-up", {
-      data: { email: mockUser.email }, // missing name and password
-    });
-    expect(response.ok()).toBeFalsy();
-    expect(response.status()).toBe(400);
-  });
-
-  test("sign-up failed: duplicate name", async ({ request }) => {
-    await request.post("auth/sign-up", { data: mockUser });
-    const response = await request.post("auth/sign-up", {
-      data: {...mockUser, email:"test_user1@gmail.com"},
-    });
-    expect(response.ok()).toBeFalsy();
-    expect(response.status()).toBe(409);
-  });
-  
-  test("sign-up failed: duplicate email", async ({ request }) => {
-    await request.post("auth/sign-up", { data: mockUser });
-    const response = await request.post("auth/sign-up", {
-      data: mockUser,
-    });
-    expect(response.ok()).toBeFalsy();
-    expect(response.status()).toBe(409);
-  });
-
-  test("sign-up failed: invalid password", async ({ request }) => {
-    await request.post("auth/sign-up", { data: mockUser });
-    const response = await request.post("auth/sign-up", {
-      data: { ...mockUser, password: "" },
+  test.describe("Failed", () => {
+    test("missing fields", async ({ request }) => {
+      const response = await request.post("auth/sign-up", {
+        data: { email: mockUser.email }, // missing name and password
+      });
+      expect(response.ok()).toBeFalsy();
+      expect(response.status()).toBe(400);
+      await checkBody(response, false);
     });
 
-    expect(response.ok()).toBeFalsy();
-    expect(response.status()).toBe(400);
+    test("duplicate name", async ({ request }) => {
+      await request.post("auth/sign-up", { data: mockUser });
+      const response = await request.post("auth/sign-up", {
+        data: {...mockUser, email:"test_user1@gmail.com"},
+      });
+      expect(response.ok()).toBeFalsy();
+      expect(response.status()).toBe(409);
+      checkBody(response,false);
+    });
+
+    test("duplicate email", async ({ request }) => {
+      await request.post("auth/sign-up", { data: mockUser });
+      const response = await request.post("auth/sign-up", {
+        data: mockUser,
+      });
+      expect(response.ok()).toBeFalsy();
+      expect(response.status()).toBe(409);
+      checkBody(response,false);
+    });
+
+    test("invalid password", async ({ request }) => {
+      await request.post("auth/sign-up", { data: mockUser });
+      const response = await request.post("auth/sign-up", {
+        data: { ...mockUser, password: "" },
+      });
+
+      expect(response.ok()).toBeFalsy();
+      expect(response.status()).toBe(400);
+      checkBody(response,false);
+    });
+
+    test("misspelling field", async ({ request }) => {
+      const response = await request.post("auth/sign-up", {
+        data: { 
+          incorrectFiled: mockUser.name,
+          email: mockUser.email,
+          password: mockUser.password 
+        },
+      });
+      expect(response.ok()).toBeFalsy();
+      expect(response.status()).toBe(400);
+      checkBody(response,false);
+    });
   });
 
-  test("sign-up failed: misspelling field", async ({ request }) => {
-    const response = await request.post("auth/sign-up", {
-      data: { 
-        incorrectFiled: mockUser.name,
-        email: mockUser.email,
-        password: mockUser.password 
-      },
-    });
-    expect(response.ok()).toBeFalsy();
-    expect(response.status()).toBe(400);
-  });
   test.afterEach(async ()=>{
     await truncateUsersTable();
   });
@@ -78,58 +92,65 @@ test.describe("Log-in", () => {
     await request.post("auth/sign-up", { data: mockUser });
   });
 
-  test("log-in passed", async ({ request }) => {
-    const response = await request.post("auth/log-in", {
-      data: {
-        email: mockUser.email,
-        password: mockUser.password,
-      },
-    });
-    expect(response.ok()).toBeTruthy();
-    expect(response.status()).toBe(200);
+  test.describe("Passed", () => {
+    test("log-in passed", async ({ request }) => {
+      const response = await request.post("auth/log-in", {
+        data: {
+          email: mockUser.email,
+          password: mockUser.password,
+        },
+      });
+      expect(response.ok()).toBeTruthy();
+      expect(response.status()).toBe(200);
 
-    const settedUser = await response.json();
-    expect(settedUser).toHaveProperty("message", "Successfully authorized.");
-    const setCookie = response.headers()["set-cookie"];
-    expect(setCookie).toBeDefined();
+      await checkBody(response);
+      const setCookie = response.headers()["set-cookie"];
+      expect(setCookie).toBeDefined();
+    });
   });
 
-  test("log-in failed: wrong password", async ({ request }) => {
-    const response = await request.post("auth/log-in", {
-      data: {
-        email: mockUser.email,
-        password: "wrongpassword",
-      },
+  test.describe("Failed", () => {
+    test("wrong password", async ({ request }) => {
+      const response = await request.post("auth/log-in", {
+        data: {
+          email: mockUser.email,
+          password: "wrongpassword",
+        },
+      });
+      expect(response.ok()).toBeFalsy();
+      expect(response.status()).toBe(401);
+      checkBody(response,false);
     });
-    expect(response.ok()).toBeFalsy();
-    expect(response.status()).toBe(401);
-  });
 
-  test("log-in failed: non-existent email", async ({ request }) => {
-    const response = await request.post("auth/log-in", {
-      data: {
-        email: "notfound@example.com",
-        password: "somepassword",
-      },
+    test("non-existent email", async ({ request }) => {
+      const response = await request.post("auth/log-in", {
+        data: {
+          email: "notfound@example.com",
+          password: "somepassword",
+        },
+      });
+      expect(response.ok()).toBeFalsy();
+      expect(response.status()).toBe(401);
+      checkBody(response,false);
     });
-    expect(response.ok()).toBeFalsy();
-    expect(response.status()).toBe(401);
-  });
 
-  test("log-in failed: missing fields", async ({ request }) => {
-    const response = await request.post("auth/log-in", {
-      data: { email: mockUser.email }, // missing password
+    test("missing fields", async ({ request }) => {
+      const response = await request.post("auth/log-in", {
+        data: { email: mockUser.email }, // missing password
+      });
+      expect(response.ok()).toBeFalsy();
+      expect(response.status()).toBe(400);
+      checkBody(response,false);
     });
-    expect(response.ok()).toBeFalsy();
-    expect(response.status()).toBe(400);
-  });
 
-  test("log-in failed: misspelling field", async ({ request }) => {
-    const response = await request.post("auth/log-in", {
-      data: { email: mockUser.email, incorrectField: mockUser.password },
+    test("misspelling field", async ({ request }) => {
+      const response = await request.post("auth/log-in", {
+        data: { email: mockUser.email, incorrectField: mockUser.password },
+      });
+      expect(response.ok()).toBeFalsy();
+      expect(response.status()).toBe(400);
+      checkBody(response,false);
     });
-    expect(response.ok()).toBeFalsy();
-    expect(response.status()).toBe(400);
   });
 
   test.afterAll(async()=>{

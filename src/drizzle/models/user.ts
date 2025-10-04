@@ -29,6 +29,14 @@ export async function findUser(userData: {
   return user[0];
 }
 
+export async function findUserByID(id: string): Promise<UserDB | undefined> {
+  const user: UserDB[] | undefined = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, id));
+  return user[0];
+}
+
 export async function findUserLocalAccount(
   userID: string
 ): Promise<LocalUser | undefined> {
@@ -149,7 +157,7 @@ export async function insertUserFavoriteRecipe(
     .insert(favoriteRecipesTable)
     .values({ recipeID: recipeID, userID: userID })
     .returning();
-  return insertedFavoriteRecipe[0]?.recipeID;
+  return insertedFavoriteRecipe[0];
 }
 
 export async function truncateUsersTable() {

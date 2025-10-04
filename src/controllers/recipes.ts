@@ -2,6 +2,7 @@ import * as RecipeModel from "@drizzle/models/recipe";
 import { AuthRequest } from "@shared/types/general";
 import { InputRecipe, Recipe } from "@shared/types/recipe";
 import { AppError } from "@shared/utils/AppError";
+import { AppResponse } from "@shared/utils/AppResponse";
 import { getRecipeCacheKey } from "@shared/utils/general";
 import axios from "axios";
 import { NextFunction, Request, Response } from "express";
@@ -35,7 +36,12 @@ export async function getRecipes(
     // error handling !
     const recipes = await axios.get(url + searchQuery);
 
-    return res.status(200).json(recipes.data);
+    const response = AppResponse.fromArgs(
+      200,
+      recipes.data,
+      "Recipes fetched successfully."
+    );
+    return res.status(response.getStatus()).json(response.getMessage());
   } catch (error: unknown) {
     next(error);
   }
@@ -70,7 +76,12 @@ export async function getRecipe(
     // eslint-disable-next-line no-console
     console.log(`Cached: ${isCachedRecipe}`);
 
-    return res.status(200).json(recipe.data);
+    const response = AppResponse.fromArgs(
+      200,
+      recipe.data,
+      "Recipe fetched successfully."
+    );
+    return res.status(response.getStatus()).json(response.getMessage());
   } catch (error: unknown) {
     next(error);
   }
@@ -101,16 +112,23 @@ export async function postRecipe(
     const recipe: InputRecipe = req.body;
     const userID: string | undefined = req.user?.id;
     if (!userID) {
-      const err: AppError = new AppError(400, req, "userID was not provided.");
-      return res.status(err.statusCode).json(err.getError());
+      const status = 400;
+      const err: AppError = AppError.fromArgs(
+        status,
+       req.originalUrl,
+        "UserID was not provided."
+      );
+      return res.status(status).json(err.getError());
     }
 
     const recipeDb: Recipe | undefined = await RecipeModel.findRecipeByTitle(
       recipe.title
     );
     if (recipeDb) {
-      const err: AppError = new AppError(409, req, "Recipe already exists.");
-      return res.status(err.statusCode).json(err.getError());
+      const err: AppError = AppError.fromArgs(409,req.originalUrl,
+        "Recipe already exists.",
+      );
+      return res.status(err.getStatus()).json(err.getError());
     }
 
     const recipeID: string | undefined = await RecipeModel.insertRecipe(
@@ -118,17 +136,18 @@ export async function postRecipe(
       userID
     );
     if (!recipeID) {
-      const err: AppError = new AppError(
-        500,
-        req,
-        "Error during insert recipe to a DB."
+      const err: AppError = AppError.fromArgs(500, req.originalUrl,
+        "Error during insert recipe to a DB.",
       );
-      return res.status(err.statusCode).json(err.getError());
+      return res.status(err.getStatus()).json(err.getError());
     }
 
-    return res.status(201).json({
-      message: `Recipe added successfully! Recipe id: ${recipeID}.`,
-    });
+    const response = AppResponse.fromArgs(
+      201,
+      recipe,
+      `Recipe added successfully! Recipe id: ${recipeID}.`
+    );
+    return res.status(response.getStatus()).json(response.getMessage());
   } catch (error: unknown) {
     next(error);
   }

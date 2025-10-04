@@ -4,6 +4,7 @@ import { NextFunction, Request, Response } from "express";
 import * as UserModel from "@drizzle/models/user";
 import { LocalUser, UserDB } from "@shared/types/user";
 import { AppError } from "@shared/utils/AppError";
+import { AppResponse } from "@shared/utils/AppResponse";
 
 export async function signUp(req: Request, res: Response, next: NextFunction) {
   try {
@@ -18,11 +19,11 @@ export async function signUp(req: Request, res: Response, next: NextFunction) {
     }
     const userDBdata: UserDB | undefined = await UserModel.findUser({
       name: inputUser.name,
-      email: inputUser.email
-    }); 
+      email: inputUser.email,
+    });
     if (userDBdata) {
-      const error = new AppError(409, req);
-      return res.status(error.statusCode).json(error.getError());
+      const error = AppError.fromArgs(409, req.originalUrl);
+      return res.status(error.getStatus()).json(error.getError());
     }
     const hashedPassword = await bcrypt.hash(inputUser.password, 10);
     const securedUser: {
@@ -38,16 +39,23 @@ export async function signUp(req: Request, res: Response, next: NextFunction) {
       securedUser
     );
     if (!settedUser) {
-      const error = new AppError(500, req, "Error during setting user in db.");
-      throw error.getError();
+      const error = AppError.fromArgs(
+        500,
+        req.originalUrl,
+        "Error during setting user in db."
+      );
+      return res.status(error.getStatus()).json(error.getError());
     }
     const userPayload = { id: settedUser.id };
     const JWTtokens: { accessToken: string; refreshToken: string } =
       AuthService.generateJWTtokens(userPayload, secretKey);
-    AuthService.setAuthCookies(res, JWTtokens);
-    return res.status(201).json({
-      message: "User has been created successfully.",
-    });
+    AuthService.setJWTCookies(res, JWTtokens);
+    const response = AppResponse.fromArgs(
+      201,
+      settedUser,
+      "User has been created successfully."
+    );
+    return res.status(response.getStatus()).json(response.getMessage());
   } catch (error: unknown) {
     return next(error);
   }
@@ -66,18 +74,18 @@ export async function logIn(req: Request, res: Response, next: NextFunction) {
     }
     const userDBdata: UserDB | undefined = await UserModel.findUser({
       name: inputUser.name,
-      email: inputUser.email
+      email: inputUser.email,
     });
     if (!userDBdata) {
-      const error = new AppError(401, req);
-      return res.status(error.statusCode).json(error.getError());
+      const error = AppError.fromArgs(401, req.originalUrl);
+      return res.status(error.getStatus()).json(error.getError());
     }
 
     const userCredentials: LocalUser | undefined =
       await UserModel.findUserLocalAccount(userDBdata.id);
     if (!userCredentials) {
-      const error = new AppError(401, req);
-      return res.status(error.statusCode).json(error.getError());
+      const error = AppError.fromArgs(401, req.originalUrl);
+      return res.status(error.getStatus()).json(error.getError());
     }
 
     const hashedPassword: string = userCredentials.password;
@@ -86,8 +94,8 @@ export async function logIn(req: Request, res: Response, next: NextFunction) {
       hashedPassword
     );
     if (!isPasswordEqual) {
-      const error = new AppError(401, req);
-      return res.status(error.statusCode).json(error.getError());
+      const error = AppError.fromArgs(401, req.originalUrl);
+      return res.status(error.getStatus()).json(error.getError());
     }
 
     const userPayload = { id: userDBdata.id };
@@ -95,10 +103,13 @@ export async function logIn(req: Request, res: Response, next: NextFunction) {
       accessToken: string;
       refreshToken: string;
     } = AuthService.generateJWTtokens(userPayload, secretKey);
-    AuthService.setAuthCookies(res, JWTtokens);
-    return res.status(200).json({
-      message: "Successfully authorized.",
-    });
+    AuthService.setJWTCookies(res, JWTtokens);
+    const response = AppResponse.fromArgs(
+      200,
+      userDBdata,
+      "Successfully authorized."
+    );
+    return res.status(response.getStatus()).json(response.getMessage());
   } catch (error: unknown) {
     return next(error);
   }
@@ -119,13 +130,16 @@ export async function googleOAuth(
       userTokenPayload,
       secretKey
     );
-    AuthService.setAuthCookies(res, {
+    AuthService.setJWTCookies(res, {
       accessToken,
       refreshToken,
     });
-    res.status(201).json({
-      message: "Successfully log-in with Google",
-    });
+    const response = AppResponse.fromArgs(
+      201,
+      user,
+      "Successfully log-in with Google"
+    );
+    return res.status(response.getStatus()).json(response.getMessage());
   } catch (error: unknown) {
     return next(error);
   }

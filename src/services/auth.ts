@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { Response } from "express";
+import { CookieOptions, Response } from "express";
 import { body, ValidationChain } from "express-validator";
 import { Strategy } from "passport-google-oauth2";
 import * as UserModel from "@drizzle/models/user";
@@ -54,7 +54,7 @@ export function generateJWTtokens(
   return { accessToken, refreshToken };
 }
 
-export function setAuthCookies(
+export function setJWTCookies(
   res: Response,
   tokens: {
     accessToken: string;
@@ -62,12 +62,13 @@ export function setAuthCookies(
   }
 ): void {
   const { accessToken, refreshToken } = tokens;
-  res.cookie("accessToken", accessToken, {
+  const cookieOptions: CookieOptions = {
     httpOnly: true,
-  });
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-  });
+    sameSite: "lax",
+    maxAge: 10000,
+  };
+  res.cookie("accessToken", accessToken, cookieOptions);
+  res.cookie("refreshToken", refreshToken, cookieOptions);
 }
 
 export function tokenVerify(token: string, secret: string) {
